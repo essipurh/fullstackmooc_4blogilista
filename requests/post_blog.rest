@@ -2,7 +2,8 @@ POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 {
-  "title": "testi blogi 3",
+  "title": "testi blogi 4",
   "author": "Testi Testaaja",
-  "url": "www.urliontama.fi"
+  "url": "www.urliontama.fi",
+  "userId": "6687e54011578ecd55b4b113"
 }

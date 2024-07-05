@@ -18,9 +18,8 @@ describe('user db testing', () => {
     await user.save()
   })
 
-  test('creation succeeds with a fresh username', async () => {
+  test('creation succeeds with a new username', async () => {
     const initUsers = await helpers.usersInDb()
-
     const newUser = {
       username: 'testi2',
       name: 'Testi Testaaja 2',
@@ -38,6 +37,66 @@ describe('user db testing', () => {
 
     const usernames = usersAfter.map(u => u.username)
     assert(usernames.includes(newUser.username))
+  })
+
+  test('no new user added if name not unique', async () => {
+    const initUsers = await helpers.usersInDb()
+    const newUser = {
+      username: 'testi1',
+      name: 'Testi Testaaja 2',
+      password: 'salainen2',
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+
+    const usersAfter = await helpers.usersInDb()
+    assert.strictEqual(usersAfter.length, initUsers.length)
+
+    const names = usersAfter.map(u => u.name)
+    assert(!names.includes(newUser.name))
+  })
+
+  test('no new user added if name shorter than 3 chars', async () => {
+    const initUsers = await helpers.usersInDb()
+    const newUser = {
+      username: 'te',
+      name: 'Testi Testaaja 2',
+      password: 'salainen2',
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+
+    const usersAfter = await helpers.usersInDb()
+    assert.strictEqual(usersAfter.length, initUsers.length)
+
+    const usernames = usersAfter.map(u => u.username)
+    assert(!usernames.includes(newUser.username))
+  })
+
+  test('no new user added if password shorter than 3 chars', async () => {
+    const initUsers = await helpers.usersInDb()
+    const newUser = {
+      username: 'testi2',
+      name: 'Testi Testaaja 2',
+      password: 's2',
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+
+    const usersAfter = await helpers.usersInDb()
+    assert.strictEqual(usersAfter.length, initUsers.length)
+
+    const usernames = usersAfter.map(u => u.username)
+    assert(!usernames.includes(newUser.username))
   })
 
   test('get users', async () => {

@@ -5,6 +5,8 @@ const supertest = require('supertest')
 const app = require('../app')
 const helpers = require('./test_helpers')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 
 const api = supertest(app) // superagent olio
 
@@ -36,14 +38,21 @@ describe('GET tests', () => {
 describe('POST tests', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
+    const passwordHash = await bcrypt.hash('salasana1', 10)
+    const user = new User({ username: 'testi1', name: 'testi testaaja1', passwordHash: passwordHash })
+    await user.save()
   })
   test('a new blog post is added', async () => {
+    const userInDb = await User.find({})
     const newBlog = {
       title: 'New Test Blog 1',
       author: 'Supertesti Testaaja',
       url: 'www.supertestthat.test',
-      likes: 1
+      likes: 1,
+      userId: userInDb[0]._id
     }
+
     await api
       .post('/api/blogs')
       .send(newBlog)
@@ -56,10 +65,12 @@ describe('POST tests', () => {
     assert.strictEqual(response.body[0].likes, 1)
   })
   test('a new blog post is added with zero likes', async () => {
+    const userInDb = await User.find({})
     const newBlog = {
       title: 'New Test Blog 1',
       author: 'Supertesti Testaaja',
-      url: 'www.supertestthat.test'
+      url: 'www.supertestthat.test',
+      userId: userInDb[0]._id
     }
     await api
       .post('/api/blogs')
@@ -73,9 +84,11 @@ describe('POST tests', () => {
     assert.strictEqual(response.body[0].likes, 0)
   })
   test('a new blog without title not added', async () => {
+    const userInDb = await User.find({})
     const newBlog = {
       author: 'Supertesti Testaaja',
-      url: 'www.supertestthat.test'
+      url: 'www.supertestthat.test',
+      userId: userInDb[0]._id
     }
 
     await api
@@ -87,9 +100,11 @@ describe('POST tests', () => {
     assert.strictEqual(response.body.length, 0)
   })
   test('a new blog without url not added', async () => {
+    const userInDb = await User.find({})
     const newBlog = {
       title: 'New Test Blog 1',
       author: 'Supertesti Testaaja',
+      userId: userInDb[0]._id
     }
 
     await api
