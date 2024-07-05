@@ -5,7 +5,6 @@ const supertest = require('supertest')
 const app = require('../app')
 const helpers = require('./test_helpers')
 const Blog = require('../models/blog')
-const { log } = require('node:console')
 
 const api = supertest(app) // superagent olio
 
