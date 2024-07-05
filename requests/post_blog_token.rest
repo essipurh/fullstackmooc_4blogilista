@@ -1,0 +1,9 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJpZCI6IjY2ODgxNDZiNWFlNDk1MmZiNzk3NjExOCIsImlhdCI6MTcyMDIwODEyMH0.2n_WfhBl361402PJOAfXm14lnz0pVn9zfke_vu5FIIc
+
+{
+  "title": "testi blogi 17 Token",
+  "author": "Testi Testaaja",
+  "url": "www.urliontama.fi"
+}
