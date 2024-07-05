@@ -1,5 +1,6 @@
 const config = require('./utils/config')
 const express = require('express')
+require('express-async-errors')
 const app = express()
 const cors = require('cors')
 const morgan = require('morgan')
@@ -14,7 +15,7 @@ mongoose.set('strictQuery', false) // tallentaa db:ghen myös muut kentät reque
 info('*** Connecting to:', config.MONGODB_URI)
 mongoose.connect(config.MONGODB_URI)
   .then(() => info('Connected to MongoDB'))
-  .catch(error => error('ERROR connecting to mongodb', error.message))
+  .catch((errormsg) => error('ERROR connecting to mongodb', errormsg.message))
 
 app.use(cors())
 app.use(express.json())
