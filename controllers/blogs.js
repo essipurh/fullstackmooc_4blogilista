@@ -31,7 +31,7 @@ blogsRouter.delete('/:id', userExtractor, async (request, response) => {
   const blogToBeDeletedId = request.params.id
   const userBlogs = request.user.blogs.map(blog => blog.toString())
   if (!userBlogs.includes(blogToBeDeletedId)) {
-    return response.status(401).json({ error: 'User ids do not match.' })
+    return response.status(401).json({ error: 'Unauthorized.' })
   }
   await Blog.findByIdAndDelete(request.params.id)
   response.status(204).end()

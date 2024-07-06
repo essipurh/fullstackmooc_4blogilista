@@ -5,9 +5,6 @@ const supertest = require('supertest')
 const app = require('../app')
 const helpers = require('./test_helpers')
 const Blog = require('../models/blog')
-const User = require('../models/user')
-const bcrypt = require('bcrypt')
-
 const api = supertest(app) // superagent olio
 
 describe('GET tests', () => {
@@ -38,23 +35,77 @@ describe('GET tests', () => {
 describe('POST tests', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
-    await User.deleteMany({})
-    const passwordHash = await bcrypt.hash('salasana1', 10)
-    const user = new User({ username: 'testi1', name: 'testi testaaja1', passwordHash: passwordHash })
-    await user.save()
+    await helpers.addTestUser()
   })
-  test('a new blog post is added', async () => {
-    const userInDb = await User.find({})
+
+  test('a new blog post is not added if token missing', async () => {
+    const token = ''
     const newBlog = {
       title: 'New Test Blog 1',
       author: 'Supertesti Testaaja',
       url: 'www.supertestthat.test',
-      likes: 1,
-      userId: userInDb[0]._id
+      likes: 1
     }
-
     await api
       .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
+      .send(newBlog)
+      .expect({ error: 'Unauthorized.'})
+      .expect(401)
+    
+    const response = await api.get('/api/blogs')
+    assert.strictEqual(response.body.length, 0)
+  })
+
+  test('a new blog post is not added if token is invalid', async () => {
+    const token = 'R5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJpZCI6IjY2ODgxNDZiNWFlNDk1MmZiNzk3NjExOCIsImlhdCI6MTcyMDIwMzI2MH0.VGSxQwAsx8284O_xMAAg-y29ts8wPFW0aJiUlvtb1yI'
+    const newBlog = {
+      title: 'New Test Blog 1',
+      author: 'Supertesti Testaaja',
+      url: 'www.supertestthat.test',
+      likes: 1
+    }
+    await api
+      .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
+      .send(newBlog)
+      .expect({ error: 'Invalid token.' })
+      .expect(400)
+    
+    const response = await api.get('/api/blogs')
+    assert.strictEqual(response.body.length, 0)
+  })
+
+  test('a new blog post is not added if token isn not users', async () => {
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJpZCI6IjY2ODgxNDZiNWFlNDk1MmZiNzk3NjExOCIsImlhdCI6MTcyMDIwMzI2MH0.VGSxQwAsx8284O_xMAAg-y29ts8wPFW0aJiUlvtb1yI'
+    const newBlog = {
+      title: 'New Test Blog 1',
+      author: 'Supertesti Testaaja',
+      url: 'www.supertestthat.test',
+      likes: 1
+    }
+    await api
+      .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
+      .send(newBlog)
+      .expect({ error: 'Unauthorized. User not found.' })
+      .expect(401)
+    
+    const response = await api.get('/api/blogs')
+    assert.strictEqual(response.body.length, 0)
+  })
+
+  test('a new blog post is added', async () => {
+    const token = await helpers.getUserToken()
+    const newBlog = {
+      title: 'New Test Blog 1',
+      author: 'Supertesti Testaaja',
+      url: 'www.supertestthat.test',
+      likes: 1
+    }
+    await api
+      .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -64,16 +115,17 @@ describe('POST tests', () => {
     assert.strictEqual(response.body[0].title, 'New Test Blog 1')
     assert.strictEqual(response.body[0].likes, 1)
   })
+
   test('a new blog post is added with zero likes', async () => {
-    const userInDb = await User.find({})
+    const token = await helpers.getUserToken()
     const newBlog = {
       title: 'New Test Blog 1',
       author: 'Supertesti Testaaja',
       url: 'www.supertestthat.test',
-      userId: userInDb[0]._id
     }
     await api
       .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -83,32 +135,33 @@ describe('POST tests', () => {
     assert.strictEqual(response.body[0].title, 'New Test Blog 1')
     assert.strictEqual(response.body[0].likes, 0)
   })
+
   test('a new blog without title not added', async () => {
-    const userInDb = await User.find({})
+    const token = await helpers.getUserToken()
     const newBlog = {
       author: 'Supertesti Testaaja',
       url: 'www.supertestthat.test',
-      userId: userInDb[0]._id
     }
 
     await api
       .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
       .send(newBlog)
       .expect(400)
     
     const response = await api.get('/api/blogs')
     assert.strictEqual(response.body.length, 0)
   })
+
   test('a new blog without url not added', async () => {
-    const userInDb = await User.find({})
+    const token = await helpers.getUserToken()
     const newBlog = {
       title: 'New Test Blog 1',
       author: 'Supertesti Testaaja',
-      userId: userInDb[0]._id
     }
-
     await api
       .post('/api/blogs')
+      .auth(token, {type: 'bearer'})
       .send(newBlog)
       .expect(400)
     
@@ -121,11 +174,14 @@ describe('DELETE tests', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
     await Blog.insertMany(helpers.test_blogs)
+    await helpers.addTestUser()
   })
   test('a certain blog post is deleted', async () => {
     const deleteId = helpers.test_blogs[0]._id
+    const token = await helpers.getUserToken()
     await api
       .delete(`/api/blogs/${deleteId}`)
+      .auth(token, {type: 'bearer'})
       .expect(204)
     
     const response = await api.get('/api/blogs')
@@ -135,9 +191,37 @@ describe('DELETE tests', () => {
   })
   test('trying to delete a blog which doesnt exist', async () => {
     const nonExistingId = '12345677899'
+    const token = await helpers.getUserToken()
     await api
       .delete(`/api/blogs/${nonExistingId}`)
-      .expect(400)
+      .auth(token, {type: 'bearer'})
+      .expect({ error: 'Unauthorized.' })
+      .expect(401)
+    
+    const response = await api.get('/api/blogs')
+    assert.strictEqual(response.body.length, helpers.test_blogs.length)
+  })
+  test('trying to delete a blog with missing token.', async () => {
+    const deleteId = helpers.test_blogs[0]._id
+    const token =''
+    await api
+      .delete(`/api/blogs/${deleteId}`)
+      .auth(token, {type: 'bearer'})
+      .expect({ error: 'Unauthorized.' })
+      .expect(401)
+    
+    const response = await api.get('/api/blogs')
+    assert.strictEqual(response.body.length, helpers.test_blogs.length)
+  })
+
+  test('trying to delete a blog with unmathinc token.', async () => {
+    const deleteId = helpers.test_blogs[1]._id
+    const token =await helpers.getUserToken()
+    await api
+      .delete(`/api/blogs/${deleteId}`)
+      .auth(token, {type: 'bearer'})
+      .expect({ error: 'Unauthorized.' })
+      .expect(401)
     
     const response = await api.get('/api/blogs')
     assert.strictEqual(response.body.length, helpers.test_blogs.length)
@@ -152,7 +236,6 @@ describe('PUT tests', () => {
   })
   test('a certain blog post likes updated', async () => {
     const blog  = { ...helpers.test_blogs[0],likes:helpers.test_blogs[0].likes +1 }
-    console.log(blog)
     await api
       .put(`/api/blogs/${blog._id}`)
       .send(blog)

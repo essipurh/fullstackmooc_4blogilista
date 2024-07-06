@@ -1,8 +1,34 @@
 const User = require('../models/user')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 const usersInDb = async () => {
   const users = await User.find({})
   return users.map(u => u.toJSON())
+}
+
+const getUserToken = async () => {
+  const userinDB = await User.find({})// only 1 person there
+  const userToken ={
+    username: userinDB[0].username,
+    id: userinDB[0]._id
+  }
+  const token = jwt.sign(userToken, process.env.SECRET)
+  return token
+}
+
+const addTestUser = async () => {
+  await User.deleteMany({})
+  const passwordHash = await bcrypt.hash('salasana1', 10)
+  const user = new User({ username: 'testi1', name: 'testi testaaja1', passwordHash: passwordHash, blogs: [{
+    _id: "5a422a851b54a676234d17f7",
+    title: "React patterns",
+    author: "Michael Chan",
+    url: "https://reactpatterns.com/",
+    likes: 7,
+    __v: 0
+  }]})
+  await user.save()
 }
 
 const test_blogs = [
@@ -58,5 +84,7 @@ const test_blogs = [
 
 module.exports = {
   test_blogs,
-  usersInDb
+  usersInDb,
+  getUserToken,
+  addTestUser
 }
