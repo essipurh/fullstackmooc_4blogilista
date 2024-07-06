@@ -50,7 +50,7 @@ describe('POST tests', () => {
       .post('/api/blogs')
       .auth(token, {type: 'bearer'})
       .send(newBlog)
-      .expect({ error: 'Unauthorized.'})
+      .expect({ error: { name: 'TokenMissing', message: 'Unauthorized.' }})
       .expect(401)
     
     const response = await api.get('/api/blogs')
@@ -69,7 +69,7 @@ describe('POST tests', () => {
       .post('/api/blogs')
       .auth(token, {type: 'bearer'})
       .send(newBlog)
-      .expect({ error: 'Invalid token.' })
+      .expect({ error: {name: 'JsonWebTokenError', message:'Invalid token.' }})
       .expect(400)
     
     const response = await api.get('/api/blogs')
@@ -88,7 +88,7 @@ describe('POST tests', () => {
       .post('/api/blogs')
       .auth(token, {type: 'bearer'})
       .send(newBlog)
-      .expect({ error: 'Unauthorized. User not found.' })
+      .expect({ error: { name: 'Unauthorized', messgae:'Unauthorized. User not found.' }})
       .expect(401)
     
     const response = await api.get('/api/blogs')
@@ -195,7 +195,7 @@ describe('DELETE tests', () => {
     await api
       .delete(`/api/blogs/${nonExistingId}`)
       .auth(token, {type: 'bearer'})
-      .expect({ error: 'Unauthorized.' })
+      .expect({ error: { name: 'TokenNotMatch', message: 'Unauthorized.' }})
       .expect(401)
     
     const response = await api.get('/api/blogs')
@@ -207,7 +207,7 @@ describe('DELETE tests', () => {
     await api
       .delete(`/api/blogs/${deleteId}`)
       .auth(token, {type: 'bearer'})
-      .expect({ error: 'Unauthorized.' })
+      .expect({ error: { name: 'TokenMissing', message: 'Unauthorized.' }})
       .expect(401)
     
     const response = await api.get('/api/blogs')
@@ -220,7 +220,7 @@ describe('DELETE tests', () => {
     await api
       .delete(`/api/blogs/${deleteId}`)
       .auth(token, {type: 'bearer'})
-      .expect({ error: 'Unauthorized.' })
+      .expect({ error: { name: 'TokenNotMatch', message: 'Unauthorized.' }})
       .expect(401)
     
     const response = await api.get('/api/blogs')

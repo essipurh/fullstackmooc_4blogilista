@@ -14,6 +14,7 @@ blogsRouter.get('/', async (request, response) => {
 blogsRouter.post('/', userExtractor, async (request, response) => {
   const body = request.body
   const user =  request.user
+  console.log(user)
   const blog = new Blog({
     title: body.title,
     author: body.author,
@@ -31,7 +32,7 @@ blogsRouter.delete('/:id', userExtractor, async (request, response) => {
   const blogToBeDeletedId = request.params.id
   const userBlogs = request.user.blogs.map(blog => blog.toString())
   if (!userBlogs.includes(blogToBeDeletedId)) {
-    return response.status(401).json({ error: 'Unauthorized.' })
+    return response.status(401).json({ error: {name: 'TokenNotMatch', message: 'Unauthorized.' }})
   }
   await Blog.findByIdAndDelete(request.params.id)
   response.status(204).end()
