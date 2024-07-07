@@ -1,6 +1,6 @@
 POST http://localhost:3003/api/blogs
 Content-Type: application/json
-Authorization: Bearer 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RpMSIsImlkIjoiNjY4OTA0ZGNiNzdhZmRjNDU4OTdhNTAyIiwiaWF0IjoxNzIwMzQ4MzA1fQ.D9WO9KwYm4v8OEmwlweEWdCH5UHPuwBm4kiT5-TWViY
 
 {
   "title": "testi blogi 17 Token",

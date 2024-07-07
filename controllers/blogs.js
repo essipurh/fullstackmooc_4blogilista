@@ -14,7 +14,6 @@ blogsRouter.get('/', async (request, response) => {
 blogsRouter.post('/', userExtractor, async (request, response) => {
   const body = request.body
   const user =  request.user
-  console.log(user)
   const blog = new Blog({
     title: body.title,
     author: body.author,
@@ -25,7 +24,8 @@ blogsRouter.post('/', userExtractor, async (request, response) => {
   const savedBlog = await blog.save()
   user.blogs = user.blogs.concat(savedBlog._id)
   await user.save()
-  response.status(201).json(savedBlog)
+  const blogWithUser = await savedBlog.populate('user', { username: 1, name: 1})
+  response.status(201).json(blogWithUser)
 })
 
 blogsRouter.delete('/:id', userExtractor, async (request, response) => {
@@ -45,7 +45,7 @@ blogsRouter.put('/:id', async (request, response) => {
     url: request.body.url,
     likes: request.body.likes
   }
-  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true, runValidators: true, context: 'query' })
+  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true, runValidators: true, context: 'query' }).populate('user', { username: 1, name: 1})
   response.json(updatedBlog)
 })
 
